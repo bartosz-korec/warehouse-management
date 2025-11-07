@@ -1,4 +1,4 @@
-package com.bartoszkorec.warehouse_management.entity;
+package com.bartoszkorec.warehouse_management.model;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;

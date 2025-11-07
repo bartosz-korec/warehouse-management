@@ -2,9 +2,38 @@ package com.bartoszkorec.warehouse_management.service;
 
 import com.bartoszkorec.warehouse_management.dto.request.LoginRequest;
 import com.bartoszkorec.warehouse_management.dto.response.LoginResponse;
-import com.bartoszkorec.warehouse_management.dto.response.UserResponse;
+import com.bartoszkorec.warehouse_management.model.User;
+import com.bartoszkorec.warehouse_management.security.JwtService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.stereotype.Service;
 
-public interface AuthenticationService {
+@Service
+@RequiredArgsConstructor
+public class AuthenticationService {
 
-    LoginResponse login(LoginRequest loginRequest);
+    private final JwtService jwtService;
+    private final UserService userService;
+    private final AuthenticationManager authenticationManager;
+
+
+    public LoginResponse login(LoginRequest loginRequest) {
+
+        authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        loginRequest.email(),
+                        loginRequest.password()
+                )
+        );
+
+        User user = userService.findUserByEmail(loginRequest.email());
+
+        String jwtToken = jwtService.generateToken(user);
+
+        return LoginResponse.builder()
+                .token(jwtToken)
+                .expiresIn(jwtService.getJwtExpiration())
+                .build();
+    }
 }

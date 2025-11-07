@@ -1,6 +1,6 @@
 package com.bartoszkorec.warehouse_management.repository;
 
-import com.bartoszkorec.warehouse_management.entity.User;
+import com.bartoszkorec.warehouse_management.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
