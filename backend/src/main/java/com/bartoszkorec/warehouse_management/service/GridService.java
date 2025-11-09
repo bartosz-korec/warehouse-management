@@ -1,39 +1,48 @@
 package com.bartoszkorec.warehouse_management.service;
 
+import com.bartoszkorec.warehouse_management.dto.GridDto;
+import com.bartoszkorec.warehouse_management.model.Grid;
+import com.bartoszkorec.warehouse_management.repository.GridRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class GridService {
 
-    private final List<int[][]> grids = new ArrayList<>();
-    private final ConnectorService connectorService;
+//    public static final String GRID_CACHE = "grids";
+    private final GridRepository gridRepository;
 
-    public void addGrid(int[][] grid) {
-        if (grid == null || grid.length == 0) {
+//    @CachePut(value = GRID_CACHE, key = "#result.id()")
+    public GridDto createGrid(GridDto gridDto) {
+        if (gridDto == null || gridDto.layout() == null || gridDto.layout().length == 0) {
             throw new IllegalArgumentException("Grid cannot be null or empty");
         }
-        grids.add(grid);
-        connectorService.updateConnectors(grid, grids.size() - 1);
+        Grid grid = new Grid();
+        grid.setLayout(gridDto.layout());
+        grid = gridRepository.save(grid);
+        return new GridDto(grid.getId(), grid.getLayout());
     }
 
-    public int[][] getGrid(int index) {
-        if (index < 0 || index >= grids.size()) {
-            throw new IllegalArgumentException("Invalid grid index: " + index);
-        }
-        return grids.get(index);
+//    @Cacheable(value = GRID_CACHE, key = "#id")
+    public GridDto getGridById(Integer id) {
+        Grid grid = gridRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Grid with id " + id + " not found"));
+        return new GridDto(grid.getId(), grid.getLayout());
     }
 
-    public int getGridsSize() {
-        return grids.size();
+//    @Cacheable(value = GRID_CACHE)
+    public List<GridDto> getAllGrids() {
+        List<Grid> grids = gridRepository.findAll();
+        return grids.stream()
+                .map(grid -> new GridDto(grid.getId(), grid.getLayout()))
+                .toList();
     }
 
-    public int getCellValue(int gridIndex, int x, int y) {
-        int[][] grid = getGrid(gridIndex);
+    public int getCellValueFromGrid(int id, int x, int y) {
+        int[][] grid = getGridById(id).layout();
         if (x < 0 || y < 0 || x >= grid.length || y >= grid[0].length) {
             throw new IllegalArgumentException("Position out of bounds");
         }

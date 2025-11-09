@@ -1,35 +1,25 @@
 package com.bartoszkorec.warehouse_management.service;
 
+import com.bartoszkorec.warehouse_management.dto.LocationDto;
 import com.bartoszkorec.warehouse_management.model.Distance;
-import com.bartoszkorec.warehouse_management.model.Location;
-import com.bartoszkorec.warehouse_management.model.LocationType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
 public class DistanceMatrixCalculator {
 
-    private final GridService gridService;
-    private final LocationService locationService;
     private final PathFinder pathFinder;
 
-    public Location getStartingLocation() {
-        return locationService.getStartingLocation();
-    }
+    public Distance[][] calculateDistanceMatrix(List<LocationDto> locations) {
 
-    public void addGrid(int[][] grid) {
-        gridService.addGrid(grid);
-    }
-
-    public Map<Integer, Location> getLocationMap() {
-        return locationService.getLocationMap();
-    }
-
-    public Distance[][] calculateDistanceMatrix() {
-        Map<Integer, Location> locationMap = locationService.getLocationMap();
+        Map<Integer, LocationDto> locationMap = locations.stream()
+                .collect(Collectors.toMap(locationDto -> locationDto.id() - 1, Function.identity()));
         int size = locationMap.size();
         Distance[][] distanceMatrix = new Distance[size][size];
 
@@ -47,27 +37,5 @@ public class DistanceMatrixCalculator {
         }
 
         return distanceMatrix;
-    }
-
-    public void convertAllToLocations() {
-        for (int i = 0; i < gridService.getGridsSize(); i++) {
-            convertToLocations(i);
-        }
-    }
-
-    public void convertToLocations(int gridIndex) {
-        int[][] grid = gridService.getGrid(gridIndex);
-
-        for (int x = 0; x < grid.length; x++) {
-            for (int y = 0; y < grid[0].length; y++) {
-                int cellValue = grid[x][y];
-
-                if (cellValue == LocationType.PICKUP_POINT.getLabel()) {
-                    locationService.addLocation(x, y, gridIndex, LocationType.PICKUP_POINT);
-                } else if (cellValue == LocationType.STARTING_POINT.getLabel()) {
-                    locationService.addLocation(x, y, gridIndex, LocationType.STARTING_POINT);
-                }
-            }
-        }
     }
 }

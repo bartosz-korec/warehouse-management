@@ -1,21 +1,14 @@
 package com.bartoszkorec.warehouse_management;
 
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Bean;
 
 @SpringBootApplication
+//@EnableCaching
 public class WarehouseManagementApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(WarehouseManagementApplication.class, args);
 	}
 
-    @Bean
-    public CommandLineRunner populateDataFromCsv() {
-        return args -> {
-
-        };
-    }
 }

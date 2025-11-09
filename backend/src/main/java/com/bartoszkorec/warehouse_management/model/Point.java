@@ -1,5 +1,8 @@
 package com.bartoszkorec.warehouse_management.model;
 
+import jakarta.persistence.Embeddable;
+
+@Embeddable
 public record Point(int gridIndex, int x, int y) {
     @Override
     public boolean equals(Object o) {

@@ -1,5 +1,7 @@
 package com.bartoszkorec.warehouse_management.service;
 
+import com.bartoszkorec.warehouse_management.dto.ConnectorDto;
+import com.bartoszkorec.warehouse_management.dto.LocationDto;
 import com.bartoszkorec.warehouse_management.model.*;
 import com.bartoszkorec.warehouse_management.utils.ConnectorHelper;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +20,7 @@ public class PathFinder {
     /**
      * Find the shortest path between two locations using BFS.
      */
-    public Distance findShortestPath(Location start, Location end) {
+    public Distance findShortestPath(LocationDto start, LocationDto end) {
         Queue<Point> frontier = new LinkedList<>();
         Set<Point> visited = new HashSet<>();
         Map<Point, Long> distances = new HashMap<>();
@@ -69,7 +71,7 @@ public class PathFinder {
                 }
 
                 try {
-                    int cellValue = gridService.getCellValue(neighbor.gridIndex(), neighbor.x(), neighbor.y());
+                    int cellValue = gridService.getCellValueFromGrid(neighbor.gridIndex(), neighbor.x(), neighbor.y());
                     if (cellValue == LocationType.WALL.getLabel()) {
                         continue;
                     }
@@ -92,11 +94,11 @@ public class PathFinder {
                                    Map<Point, List<Integer>> usedConnectors, Set<Point> visited,
                                    Queue<Point> frontier) {
         try {
-            int cellValue = gridService.getCellValue(current.gridIndex(), current.x(), current.y());
+            int cellValue = gridService.getCellValueFromGrid(current.gridIndex(), current.x(), current.y());
 
             if (cellValue >= LocationType.CONNECTOR_MIN_VALUE.getLabel()) {
                 // Get connector from the ConnectorManager directly
-                Connector connector = connectorService.getConnector(cellValue);
+                ConnectorDto connector = connectorService.getConnectorByCellValue(cellValue);
 
                 if (connector != null && ConnectorHelper.isConnectorReady(connector)) {
                     for (Point otherPoint : ConnectorHelper.getPointsFromConnector(connector)) {
@@ -107,7 +109,7 @@ public class PathFinder {
                             // Create a new list with all previous connectors
                             List<Integer> newConnectors = new ArrayList<>(usedConnectors.get(current));
                             // Add this connector's ID
-                            newConnectors.add(connector.getLabel());
+                            newConnectors.add(connector.cellValue());
                             usedConnectors.put(otherPoint, newConnectors);
 
                             frontier.add(otherPoint);

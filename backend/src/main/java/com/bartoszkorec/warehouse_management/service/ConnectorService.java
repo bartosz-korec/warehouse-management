@@ -1,44 +1,49 @@
 package com.bartoszkorec.warehouse_management.service;
 
+import com.bartoszkorec.warehouse_management.dto.ConnectorDto;
+import com.bartoszkorec.warehouse_management.dto.GridDto;
 import com.bartoszkorec.warehouse_management.model.Connector;
 import com.bartoszkorec.warehouse_management.model.LocationType;
 import com.bartoszkorec.warehouse_management.model.Point;
+import com.bartoszkorec.warehouse_management.repository.ConnectorRepository;
 import com.bartoszkorec.warehouse_management.utils.ConnectorHelper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-
-import java.util.HashMap;
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ConnectorService {
 
-    private final Map<Integer, Connector> connectors = new HashMap<>();
+//    public static final String CONNECTOR_CACHE = "connectors";
+    private final ConnectorRepository connectorRepository;
 
-    public Connector getConnector(int connectorId) {
-        return connectors.get(connectorId);
+//    @Cacheable(value = CONNECTOR_CACHE, key = "#cellValue")
+    public ConnectorDto getConnectorByCellValue(int cellValue) {
+        Connector connector = connectorRepository.findByCellValue(cellValue)
+                .orElseThrow(() -> new IllegalArgumentException("Connector with cell value " + cellValue + " not found"));
+        return ConnectorHelper.toDto(connector);
     }
 
-    public void updateConnectors(int[][] grid, int gridIndex) {
-        for (int row = 0; row < grid.length; row++) {
-            for (int col = 0; col < grid[0].length; col++) {
-                int cellValue = grid[row][col];
+    public void createConnectorsFromGrid(GridDto gridDto) {
+
+        int[][] layout = gridDto.layout();
+        for (int row = 0; row < layout.length; row++) {
+            for (int col = 0; col < layout[0].length; col++) {
+                int cellValue = layout[row][col];
                 if (cellValue >= LocationType.CONNECTOR_MIN_VALUE.getLabel()) {
-                    System.out.println("Adding connector: " + cellValue + " grid=" + gridIndex + " at (" + row + ", " + col + ")");
-                    connectors.values().forEach(System.out::println);
-                    Connector connector = connectors.getOrDefault(cellValue, new Connector(cellValue));
-                    Point point = new Point(gridIndex, row, col);
+                    log.info("Adding connector: {} grid={} at ({}, {})", cellValue, gridDto.id(), row, col);
+                    Connector connector = connectorRepository.findByCellValue(cellValue)
+                            .orElse(ConnectorHelper.createNewConnector(cellValue));
+
+                    Point point = new Point(gridDto.id(), row, col);
 
                     try {
                         ConnectorHelper.addPointToConnector(connector, point);
-                        connectors.put(cellValue, connector);
-                    } catch (IllegalArgumentException e) {
-                        // This happens when trying to add a point from the same grid
-                        System.out.println("Warning: " + e.getMessage());
-                    } catch (IllegalStateException e) {
-                        // This happens when both points are already set
-                        System.out.println("Warning: " + e.getMessage());
+                        connectorRepository.save(connector);
+                    } catch (IllegalArgumentException | IllegalStateException e) {
+                        log.warn("Warning: {}", e.getMessage());
                     }
                 }
             }

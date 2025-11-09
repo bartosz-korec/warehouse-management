@@ -1,66 +1,30 @@
 package com.bartoszkorec.warehouse_management.service;
 
+import com.bartoszkorec.warehouse_management.dto.LocationDto;
 import com.bartoszkorec.warehouse_management.model.Distance;
-import com.bartoszkorec.warehouse_management.model.Location;
-import com.bartoszkorec.warehouse_management.utils.DistanceMatrixHelper;
 import com.google.ortools.Loader;
 import com.google.ortools.constraintsolver.*;
-import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.HashSet;
 import java.util.Set;
 
 @Service
-@RequiredArgsConstructor
+@Slf4j
 public class RouteService {
 
-    private final DistanceMatrixCalculator distanceMatrixCalculator;
+    public String calculateSolution(Set<Integer> locations, Distance[][] distanceMatrix, LocationDto startingLocation) {
 
-    public String calculateSolution(String input) {
-
-        // Get starting location and its index in the original matrix
-        Location startingLocation = distanceMatrixCalculator.getStartingLocation();
-        System.out.println("Starting location: " + startingLocation);
-        int startingLocationIndex = startingLocation.label();
-        boolean startingLocationIncluded = false;
-
-        Distance[][] distanceMatrix = DistanceMatrixHelper.distanceMatrix;
-        String[] selectedIndicesStr = input.split(",");
-        Set<Integer> uniqueIndices = new HashSet<>();
-        for (String indexStr : selectedIndicesStr) {
-            try {
-                int index = Integer.parseInt(indexStr.trim());
-                if (index >= 0 && index < distanceMatrix.length) {
-                    uniqueIndices.add(index);
-                    if (index == startingLocationIndex) {
-                        startingLocationIncluded = true;
-                    }
-                } else {
-                    System.out.println("Ignoring invalid index: " + index);
-                }
-            } catch (NumberFormatException e) {
-                System.out.println("Ignoring non-integer input: " + indexStr);
-            }
+        if (locations.stream().noneMatch(locationId -> locationId.equals(startingLocation.id()))) {
+            locations.add(startingLocation.id());
         }
 
-        // Add starting location if not already included
-        if (!startingLocationIncluded) {
-            System.out.println("Adding starting location (index " + startingLocationIndex + ") to selection");
-            uniqueIndices.add(startingLocationIndex);
-        }
-
-        // Convert set to tracking array
-        int[] trackingArray = new int[uniqueIndices.size()];
-        int trackingArrayIndex = 0;
-        for (Integer index : uniqueIndices) {
-            trackingArray[trackingArrayIndex++] = index;
-        }
+        int[] trackingArray = locations.stream().sorted().mapToInt(Integer::intValue).toArray();
 
         // Find the position of starting location in the submatrix
         int depotIndex = -1;
         for (int i = 0; i < trackingArray.length; i++) {
-            if (trackingArray[i] == startingLocationIndex) {
+            if (trackingArray[i] == startingLocation.id()) {
                 depotIndex = i;
                 break;
             }
@@ -86,18 +50,7 @@ public class RouteService {
                 new RoutingIndexManager(subMatrix.length, 1, depotIndex);
 
         // Create Routing Model.
-        RoutingModel routing = new RoutingModel(manager);
-
-        // Create and register a transit callback.
-        final int transitCallbackIndex =
-                routing.registerTransitCallback((long fromIndex, long toIndex) -> {
-                    // Convert from routing variable Index to user NodeIndex.
-                    int fromNode = manager.indexToNode(fromIndex);
-                    int toNode = manager.indexToNode(toIndex);
-                    return subMatrix[fromNode][toNode];
-                });
-
-        routing.setArcCostEvaluatorOfAllVehicles(transitCallbackIndex);
+        RoutingModel routing = getRoutingModel(manager, subMatrix);
         RoutingSearchParameters searchParameters =
                 main.defaultRoutingSearchParameters()
                         .toBuilder()
@@ -150,8 +103,24 @@ public class RouteService {
             routeDistance += routing.getArcCostForVehicle(previousIndex, index, 0);
         }
 
-        System.out.println(detailedRoute);
-        System.out.println("Route distance: " + routeDistance + " units");
+        log.info("{}", detailedRoute);
+        log.info("Route distance: {} units", routeDistance);
         return detailedRoute.toString();
+    }
+
+    private static RoutingModel getRoutingModel(RoutingIndexManager manager, long[][] subMatrix) {
+        RoutingModel routing = new RoutingModel(manager);
+
+        // Create and register a transit callback.
+        final int transitCallbackIndex =
+                routing.registerTransitCallback((long fromIndex, long toIndex) -> {
+                    // Convert from routing variable Index to user NodeIndex.
+                    int fromNode = manager.indexToNode(fromIndex);
+                    int toNode = manager.indexToNode(toIndex);
+                    return subMatrix[fromNode][toNode];
+                });
+
+        routing.setArcCostEvaluatorOfAllVehicles(transitCallbackIndex);
+        return routing;
     }
 }
