@@ -19,12 +19,12 @@ public class RouteService {
             locations.add(startingLocation.id());
         }
 
-        int[] trackingArray = locations.stream().sorted().mapToInt(Integer::intValue).toArray();
+        int[] trackingArray = locations.stream().sorted().mapToInt(Integer::intValue).map(integer -> integer - 1).toArray();
 
         // Find the position of starting location in the submatrix
         int depotIndex = -1;
         for (int i = 0; i < trackingArray.length; i++) {
-            if (trackingArray[i] == startingLocation.id()) {
+            if (trackingArray[i] == startingLocation.id() - 1) {
                 depotIndex = i;
                 break;
             }
@@ -73,7 +73,7 @@ public class RouteService {
         int previousNodeIndex = manager.indexToNode(previousIndex);
         int previousOriginalIndex = trackingArray[previousNodeIndex];
 
-        detailedRoute.append(previousOriginalIndex);
+        detailedRoute.append(previousOriginalIndex + 1);
 
         while (!routing.isEnd(index)) {
             previousIndex = index;
@@ -98,7 +98,7 @@ public class RouteService {
             } else {
                 detailedRoute.append(" --> ");
             }
-            detailedRoute.append(originalIndex);
+            detailedRoute.append(originalIndex + 1);
 
             routeDistance += routing.getArcCostForVehicle(previousIndex, index, 0);
         }
