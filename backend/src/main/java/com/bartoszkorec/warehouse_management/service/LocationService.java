@@ -1,46 +1,44 @@
 package com.bartoszkorec.warehouse_management.service;
 
+import com.bartoszkorec.warehouse_management.dto.LocationDto;
 import com.bartoszkorec.warehouse_management.model.Location;
 import com.bartoszkorec.warehouse_management.model.LocationType;
+import com.bartoszkorec.warehouse_management.repository.LocationRepository;
 import com.bartoszkorec.warehouse_management.utils.LocationHelper;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.List;
+import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class LocationService {
 
-    private final AtomicInteger labelCounter = new AtomicInteger(0);
-    private final Map<Integer, Location> locationMap = new HashMap<>();
-    private Location startingLocation;
+//    public static final String LOCATION_CACHE = "locations";
+    private final LocationRepository locationRepository;
 
-    public Location getStartingLocation() {
-        if (startingLocation == null) {
-            throw new IllegalStateException("Starting location not set");
-        }
-        return startingLocation;
+    public Optional<Location> getStartingLocation() {
+        return locationRepository.findByTypeEquals(LocationType.STARTING_POINT)
+                .stream().findAny();
     }
 
-    public void addLocation(int x, int y, int gridIndex, LocationType type) {
-        int label = labelCounter.getAndIncrement();
-        Location location = LocationHelper.getNewLocation(gridIndex, x, y, label, type);
-        locationMap.put(label, location);
-        if (type == LocationType.STARTING_POINT) {
-            if (startingLocation != null) {
-                throw new IllegalStateException("Starting location already set");
-            }
-            startingLocation = location;
+//    @CachePut(value = LOCATION_CACHE, key = "#result.id()")
+    public LocationDto createLocation(LocationDto locationDto) {
+        if (locationDto.locationType() == LocationType.STARTING_POINT && getStartingLocation().isPresent()) {
+            throw new IllegalStateException("Starting location already set");
         }
+        Location location = LocationHelper.toEntity(locationDto);
+        location.setId(null);
+        location = locationRepository.save(location);
+        return LocationHelper.toDto(location);
     }
 
-    public Map<Integer, Location> getLocationMap() {
-        Map<Integer, Location> copy = new HashMap<>();
-        for (Map.Entry<Integer, Location> entry : locationMap.entrySet()) {
-            copy.put(entry.getKey(), LocationHelper.getNewLocation(entry.getValue()));
-        }
-        return Collections.unmodifiableMap(copy);
+//    @Cacheable(value = LOCATION_CACHE)
+    public List<LocationDto> getAllLocations() {
+        return locationRepository.findAll()
+                .stream()
+                .map(LocationHelper::toDto)
+                .toList();
     }
 }

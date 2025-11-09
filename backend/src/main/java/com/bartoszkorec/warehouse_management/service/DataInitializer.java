@@ -1,11 +1,11 @@
 package com.bartoszkorec.warehouse_management.service;
 
-import com.bartoszkorec.warehouse_management.model.Authority;
-import com.bartoszkorec.warehouse_management.model.Role;
-import com.bartoszkorec.warehouse_management.model.User;
+import com.bartoszkorec.warehouse_management.dto.GridDto;
+import com.bartoszkorec.warehouse_management.dto.LocationDto;
+import com.bartoszkorec.warehouse_management.model.*;
 import com.bartoszkorec.warehouse_management.repository.UserRepository;
-import com.bartoszkorec.warehouse_management.utils.DistanceMatrixHelper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
@@ -13,11 +13,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.nio.file.Path;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class DataInitializer implements CommandLineRunner {
 
     private final UserRepository userRepository;
@@ -25,40 +26,54 @@ public class DataInitializer implements CommandLineRunner {
     private final CsvReader csvReader;
     private final DistanceMatrixCalculator distanceMatrixCalculator;
     private final ResourceLoader resourceLoader;
-
+    private final GridService gridService;
+    private final LocationService locationService;
+    private final ConnectorService connectorService;
+    private final DistanceMatrixService distanceMatrixService;
 
     @Override
     public void run(String... args) throws Exception {
 
-        System.out.println("Scanning warehouse directory...");
-        Resource resource = resourceLoader.getResource("classpath:warehouses");
+        if (!gridService.getAllGrids().isEmpty()) {
+            log.info("Grids already initialized, skipping data initialization.");
+        } else {
+            log.info("Scanning warehouse directory...");
+            Resource resource = resourceLoader.getResource("classpath:warehouses");
 
-        if (resource.exists()) {
-            List<Path> csvFiles = csvReader.scanFolder(resource.getFile().getPath());
-            if (csvFiles != null) {
-                System.out.println("Found " + csvFiles.size() + " warehouse grid files");
+            if (resource.exists()) {
+                List<Path> csvFiles = csvReader.scanFolder(resource.getFile().getPath());
+                if (csvFiles != null) {
+                    log.info("Found {} warehouse grid files", csvFiles.size());
 
-                // Load each CSV file
-                for (Path csvFile : csvFiles) {
-                    System.out.println("Loading: " + csvFile.getFileName());
-                    int[][] grid = csvReader.read(csvFile);
-                    if (grid != null) {
-                        distanceMatrixCalculator.addGrid(grid);
+                    // Load each CSV file
+                    for (Path csvFile : csvFiles) {
+                        log.info("Loading: {}", csvFile.getFileName());
+                        int[][] grid = csvReader.read(csvFile);
+                        if (grid != null) {
+                            gridService.createGrid(new GridDto(null, grid));
+                        }
                     }
+
+                    // Process all grids to identify locations
+                    convertAllToLocations();
+
+                    List<LocationDto> locations = locationService.getAllLocations();
+                    log.info("All locations:");
+                    locations.forEach(l -> log.info("{}", l));
+
+                    // Calculate distance matrix across all grids
+                    DistanceMatrix distanceMatrix = new DistanceMatrix(1, distanceMatrixCalculator.calculateDistanceMatrix(locations));
+                    log.info("Distance matrix:");
+                    for (Distance[] row : distanceMatrix.getMatrix()) {
+                        log.info("{}", Arrays.toString(Arrays.stream(row)
+                                .map(d -> String.format("(d:%d,c:%s)", d.distance(), Arrays.toString(d.connectors())))
+                                .toArray()));
+                    }
+                    distanceMatrixService.createDistanceMatrix(distanceMatrix);
                 }
-
-                // Process all grids to identify locations
-                distanceMatrixCalculator.convertAllToLocations();
-
-                // Display all locations with their grid index
-                System.out.println("\nAll locations:");
-                distanceMatrixCalculator.getLocationMap().values().forEach(System.out::println);
-
-                // Calculate distance matrix across all grids
-                System.out.println("\nDistance matrix:");
-                DistanceMatrixHelper.distanceMatrix = distanceMatrixCalculator.calculateDistanceMatrix();
             }
         }
+
         String email = "user@test.com";
         if (userRepository.findByEmail(email).isEmpty()) {
             User user = new User();
@@ -72,4 +87,26 @@ public class DataInitializer implements CommandLineRunner {
         }
     }
 
+
+    public void convertAllToLocations() {
+        gridService.getAllGrids().forEach(this::convertToLocations);
+    }
+
+    public void convertToLocations(GridDto gridDto) {
+        int[][] grid = gridDto.layout();
+        int gridIndex = gridDto.id();
+
+        for (int x = 0; x < grid.length; x++) {
+            for (int y = 0; y < grid[0].length; y++) {
+                int cellValue = grid[x][y];
+
+                if (cellValue == LocationType.PICKUP_POINT.getLabel()) {
+                    locationService.createLocation(new LocationDto(null, new Point(gridIndex, x, y), LocationType.PICKUP_POINT));
+                } else if (cellValue == LocationType.STARTING_POINT.getLabel()) {
+                    locationService.createLocation(new LocationDto(null, new Point(gridIndex, x, y), LocationType.STARTING_POINT));
+                }
+            }
+        }
+        connectorService.createConnectorsFromGrid(gridDto);
+    }
 }
