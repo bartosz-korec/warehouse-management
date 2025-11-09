@@ -1,4 +1,9 @@
 package com.bartoszkorec.warehouse_management.dto;
 
-public record GridDto(Integer id, int[][] layout) {
+import java.io.Serial;
+import java.io.Serializable;
+
+public record GridDto(Integer id, int[][] layout) implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 1L;
 }

@@ -12,10 +12,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class GridService {
 
-//    public static final String GRID_CACHE = "grids";
     private final GridRepository gridRepository;
 
-//    @CachePut(value = GRID_CACHE, key = "#result.id()")
     public GridDto createGrid(GridDto gridDto) {
         if (gridDto == null || gridDto.layout() == null || gridDto.layout().length == 0) {
             throw new IllegalArgumentException("Grid cannot be null or empty");
@@ -26,14 +24,12 @@ public class GridService {
         return new GridDto(grid.getId(), grid.getLayout());
     }
 
-//    @Cacheable(value = GRID_CACHE, key = "#id")
     public GridDto getGridById(Integer id) {
         Grid grid = gridRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Grid with id " + id + " not found"));
         return new GridDto(grid.getId(), grid.getLayout());
     }
 
-//    @Cacheable(value = GRID_CACHE)
     public List<GridDto> getAllGrids() {
         List<Grid> grids = gridRepository.findAll();
         return grids.stream()

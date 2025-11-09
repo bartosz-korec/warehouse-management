@@ -16,10 +16,8 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class ConnectorService {
 
-//    public static final String CONNECTOR_CACHE = "connectors";
     private final ConnectorRepository connectorRepository;
 
-//    @Cacheable(value = CONNECTOR_CACHE, key = "#cellValue")
     public ConnectorDto getConnectorByCellValue(int cellValue) {
         Connector connector = connectorRepository.findByCellValue(cellValue)
                 .orElseThrow(() -> new IllegalArgumentException("Connector with cell value " + cellValue + " not found"));
