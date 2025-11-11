@@ -17,9 +17,10 @@ public class LocationService {
 
     private final LocationRepository locationRepository;
 
-    public Optional<Location> getStartingLocation() {
-        return locationRepository.findByTypeEquals(LocationType.STARTING_POINT)
-                .stream().findAny();
+    public LocationDto getStartingLocationDto() {
+        return getStartingLocation()
+                .map(LocationHelper::toDto)
+                .orElseThrow(() -> new IllegalStateException("Starting location not set"));
     }
 
     public LocationDto createLocation(LocationDto locationDto) {
@@ -37,5 +38,14 @@ public class LocationService {
                 .stream()
                 .map(LocationHelper::toDto)
                 .toList();
+    }
+
+    public long getLocationCount() {
+        return locationRepository.count();
+    }
+
+    private Optional<Location> getStartingLocation() {
+        return locationRepository.findByTypeEquals(LocationType.STARTING_POINT)
+                .stream().findAny();
     }
 }

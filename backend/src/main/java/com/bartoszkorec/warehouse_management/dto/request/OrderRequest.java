@@ -4,5 +4,5 @@ import jakarta.validation.constraints.NotEmpty;
 
 import java.util.Set;
 
-public record CalculateRouteRequest(@NotEmpty Set<Integer> locationIds) {
+public record OrderRequest(@NotEmpty Set<Integer> locationIds) {
 }

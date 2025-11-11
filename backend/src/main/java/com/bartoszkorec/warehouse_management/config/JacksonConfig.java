@@ -1,8 +1,8 @@
 package com.bartoszkorec.warehouse_management.config;
 
 import com.bartoszkorec.warehouse_management.utils.TrimmingStringDeserializer;
-import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.Module;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
