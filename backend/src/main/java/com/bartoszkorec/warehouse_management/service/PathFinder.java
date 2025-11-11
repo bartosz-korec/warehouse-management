@@ -2,7 +2,9 @@ package com.bartoszkorec.warehouse_management.service;
 
 import com.bartoszkorec.warehouse_management.dto.ConnectorDto;
 import com.bartoszkorec.warehouse_management.dto.LocationDto;
-import com.bartoszkorec.warehouse_management.model.*;
+import com.bartoszkorec.warehouse_management.model.Distance;
+import com.bartoszkorec.warehouse_management.model.LocationType;
+import com.bartoszkorec.warehouse_management.model.Point;
 import com.bartoszkorec.warehouse_management.utils.ConnectorHelper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

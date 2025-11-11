@@ -34,7 +34,7 @@ public class DataInitializer implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
 
-        if (!gridService.getAllGrids().isEmpty()) {
+        if (locationService.getLocationCount() > 0) {
             log.info("Grids already initialized, skipping data initialization.");
         } else {
             log.info("Scanning warehouse directory...");

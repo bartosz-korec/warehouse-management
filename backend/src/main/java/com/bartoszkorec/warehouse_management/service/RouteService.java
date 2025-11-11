@@ -1,19 +1,28 @@
 package com.bartoszkorec.warehouse_management.service;
 
 import com.bartoszkorec.warehouse_management.dto.LocationDto;
+import com.bartoszkorec.warehouse_management.dto.RouteResultDto;
 import com.bartoszkorec.warehouse_management.model.Distance;
 import com.google.ortools.Loader;
 import com.google.ortools.constraintsolver.*;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class RouteService {
 
-    public String calculateSolution(Set<Integer> locations, Distance[][] distanceMatrix, LocationDto startingLocation) {
+    private final DistanceMatrixService distanceMatrixService;
+
+    public RouteResultDto calculateSolution(Set<Integer> locations, LocationDto startingLocation) {
+
+        Distance[][] distanceMatrix = distanceMatrixService.getDistanceMatrix().getMatrix();
 
         if (locations.stream().noneMatch(locationId -> locationId.equals(startingLocation.id()))) {
             locations.add(startingLocation.id());
@@ -59,53 +68,62 @@ public class RouteService {
 
         // Solve the problem.
         Assignment solution = routing.solveWithParameters(searchParameters);
-
-        // Solution cost
-        System.out.println("Objective: " + solution.objectiveValue() + " units");
-
-        // Inspect solution
-        System.out.println("Route (with connectors):");
-        long routeDistance = 0;
-        StringBuilder detailedRoute = new StringBuilder();
-
-        long index = routing.start(0);
-        long previousIndex = index;
-        int previousNodeIndex = manager.indexToNode(previousIndex);
-        int previousOriginalIndex = trackingArray[previousNodeIndex];
-
-        detailedRoute.append(previousOriginalIndex + 1);
-
-        while (!routing.isEnd(index)) {
-            previousIndex = index;
-            previousNodeIndex = manager.indexToNode(previousIndex);
-            previousOriginalIndex = trackingArray[previousNodeIndex];
-
-            index = solution.value(routing.nextVar(index));
-            int nodeIndex = manager.indexToNode(index);
-            int originalIndex = trackingArray[nodeIndex];
-
-            // Get connector information from original distance matrix
-            int[] connectors = distanceMatrix[previousOriginalIndex][originalIndex].connectors();
-
-            // Add connector info to output if connectors are used
-            if (connectors.length > 0) {
-                detailedRoute.append(" --[");
-                for (int i = 0; i < connectors.length; i++) {
-                    if (i > 0) detailedRoute.append(",");
-                    detailedRoute.append("C").append(connectors[i]);
-                }
-                detailedRoute.append("]--> ");
-            } else {
-                detailedRoute.append(" --> ");
-            }
-            detailedRoute.append(originalIndex + 1);
-
-            routeDistance += routing.getArcCostForVehicle(previousIndex, index, 0);
+        if (solution == null) {
+            log.warn("No route solution found.");
+            return new RouteResultDto(List.of(), List.of(), 0L);
         }
 
-        log.info("{}", detailedRoute);
+        // Solution cost
+        log.info("Objective: {} units", solution.objectiveValue());
+
+        // Inspect solution
+        long routeDistance = 0L;
+        List<Integer> ordered = new ArrayList<>();
+        List<List<Integer>> connectorsPerLeg = new ArrayList<>();
+        StringBuilder routeLog = new StringBuilder();
+
+        long index = routing.start(0);
+        int startNode = manager.indexToNode(index);
+        int startOriginal = trackingArray[startNode];
+        ordered.add(startOriginal + 1);
+        routeLog.append(startOriginal + 1);
+
+        while (!routing.isEnd(index)) {
+            long prevIndex = index;
+            index = solution.value(routing.nextVar(index));
+
+            int fromNode = manager.indexToNode(prevIndex);
+            int toNode = manager.indexToNode(index);
+            int fromOriginal = trackingArray[fromNode];
+            int toOriginal = trackingArray[toNode];
+
+            Distance leg = distanceMatrix[fromOriginal][toOriginal];
+            int[] connectors = leg.connectors();
+
+            List<Integer> connectorList = new ArrayList<>();
+            if (connectors != null && connectors.length > 0) {
+                routeLog.append(" --[");
+                for (int i = 0; i < connectors.length; i++) {
+                    if (i > 0) routeLog.append(",");
+                    routeLog.append("C").append(connectors[i]);
+                    connectorList.add(connectors[i]);
+                }
+                routeLog.append("]--> ");
+            } else {
+                routeLog.append(" --> ");
+            }
+            routeLog.append(toOriginal + 1);
+
+            connectorsPerLeg.add(connectorList);
+            ordered.add(toOriginal + 1);
+
+            routeDistance += routing.getArcCostForVehicle(prevIndex, index, 0);
+        }
+
+        log.info("Route: {}", routeLog);
         log.info("Route distance: {} units", routeDistance);
-        return detailedRoute.toString();
+
+        return new RouteResultDto(ordered, connectorsPerLeg, routeDistance);
     }
 
     private static RoutingModel getRoutingModel(RoutingIndexManager manager, long[][] subMatrix) {
