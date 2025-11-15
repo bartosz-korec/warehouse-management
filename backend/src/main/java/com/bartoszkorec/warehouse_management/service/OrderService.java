@@ -1,11 +1,10 @@
 package com.bartoszkorec.warehouse_management.service;
 
-import com.bartoszkorec.warehouse_management.dto.ConnectorDto;
 import com.bartoszkorec.warehouse_management.dto.LocationDto;
 import com.bartoszkorec.warehouse_management.dto.RouteResultDto;
 import com.bartoszkorec.warehouse_management.dto.response.OrderResponse;
+import com.bartoszkorec.warehouse_management.model.LocationType;
 import com.bartoszkorec.warehouse_management.model.Point;
-import com.bartoszkorec.warehouse_management.utils.ConnectorHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -22,7 +21,6 @@ public class OrderService {
     private final RouteService routeService;
     private final GridService gridService;
     private final LocationService locationService;
-    private final ConnectorService connectorService;
 
     public OrderResponse generateOrderRoute() {
         int n = Math.toIntExact(locationService.getLocationCount());
@@ -31,7 +29,7 @@ public class OrderService {
         }
 
         Random random = new Random();
-        int subsetSize = 1 + random.nextInt(n); // 1..n
+        int subsetSize = 1 + random.nextInt(n);
 
         Set<Integer> indices = new HashSet<>();
         while (indices.size() < subsetSize) {
@@ -55,73 +53,62 @@ public class OrderService {
                 .stream()
                 .collect(Collectors.toMap(LocationDto::id, Function.identity(), (a, b) -> a, HashMap::new));
 
+        Map<Point, Integer> locationIdByPoint = locationsById.values()
+                .stream()
+                .filter(loc -> loc.point() != null)
+                .collect(Collectors.toMap(LocationDto::point, LocationDto::id, (a, b) -> a, HashMap::new));
+
         List<Integer> ordered = routeResult.orderedLocationIds();
-        List<List<Integer>> legsConnectors = routeResult.connectorsPerLeg();
+        List<List<Point>> legsPath = routeResult.pathPerLeg();
 
         List<OrderResponse.OrderLocationDto> locations = new ArrayList<>();
 
         for (int i = 0; i < ordered.size(); i++) {
             Integer locId = ordered.get(i);
             LocationDto loc = locationsById.get(locId);
-            Point locPoint = (loc != null) ? loc.point() : null;
-
-            locations.add(new OrderResponse.OrderLocationDto("L" + locId, locPoint));
-
-            if (locPoint == null || legsConnectors == null || i >= legsConnectors.size()) {
+            if (loc == null) {
                 continue;
             }
 
-            int currentGrid = locPoint.gridIndex();
-            List<Integer> connectorsForLeg = legsConnectors.get(i);
-            if (connectorsForLeg == null || connectorsForLeg.isEmpty()) {
+            locations.add(new OrderResponse.OrderLocationDto("L" + locId, loc.point()));
+
+            if (legsPath == null || i >= legsPath.size()) {
                 continue;
             }
 
-            for (Integer cellValue : connectorsForLeg) {
-                try {
-                    ConnectorDto c = connectorService.getConnectorByCellValue(cellValue);
-                    if (c == null) continue;
-                    currentGrid = appendConnectorPointsInTraversalOrder(locations, c, currentGrid);
-                } catch (IllegalArgumentException e) {
-                    log.warn("Connector {} not found: {}", cellValue, e.getMessage());
-                }
+            List<Point> path = legsPath.get(i);
+            if (path == null || path.size() <= 1) {
+                continue;
+            }
+
+            for (int j = 1; j < path.size() - 1; j++) {
+                Point intermediate = path.get(j);
+                locations.add(mapPointToOrderLocation(intermediate, locationIdByPoint));
             }
         }
 
         return new OrderResponse(gridService.getAllGrids(), locations);
     }
 
-    private int appendConnectorPointsInTraversalOrder(List<OrderResponse.OrderLocationDto> out,
-                                                      ConnectorDto c,
-                                                      int currentGrid) {
-        if (c == null) return currentGrid;
-
-        String label = "C" + c.cellValue();
-
-        // Both points present
-        if (ConnectorHelper.isConnectorReady(c)) {
-            List<Point> pts = ConnectorHelper.getPointsFromConnector(c); // [p1, p2]
-            Point a = pts.get(0);
-            Point b = pts.get(1);
-
-            boolean aMatches = a.gridIndex() == currentGrid;
-            boolean bMatches = b.gridIndex() == currentGrid;
-
-            // Decide traversal order
-            Point first = (bMatches && !aMatches) ? b : a;
-            Point second = (bMatches && !aMatches) ? a : b;
-
-            out.add(new OrderResponse.OrderLocationDto(label, first));
-            out.add(new OrderResponse.OrderLocationDto(label, second));
-            return second.gridIndex();
+    private OrderResponse.OrderLocationDto mapPointToOrderLocation(Point point,
+                                                                   Map<Point, Integer> locationIdByPoint) {
+        if (point == null) {
+            return new OrderResponse.OrderLocationDto("P(?,?)", null);
         }
 
-        // Only one point present
-        Point single = (c.p1() != null) ? c.p1() : c.p2();
-        if (single != null) {
-            out.add(new OrderResponse.OrderLocationDto(label, single));
-            return single.gridIndex();
+        Integer locationId = locationIdByPoint.get(point);
+        if (locationId != null) {
+            return new OrderResponse.OrderLocationDto("L" + locationId, point);
         }
-        return currentGrid;
+
+        try {
+            int cellValue = gridService.getCellValueFromGrid(point.gridIndex(), point.x(), point.y());
+            if (cellValue >= LocationType.CONNECTOR_MIN_VALUE.getLabel()) {
+                return new OrderResponse.OrderLocationDto("C" + cellValue, point);
+            }
+        } catch (IllegalArgumentException ignored) {
+        }
+
+        return new OrderResponse.OrderLocationDto("P(" + point.x() + "," + point.y() + ")", point);
     }
 }

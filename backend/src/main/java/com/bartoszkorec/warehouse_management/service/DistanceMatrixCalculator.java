@@ -2,6 +2,7 @@ package com.bartoszkorec.warehouse_management.service;
 
 import com.bartoszkorec.warehouse_management.dto.LocationDto;
 import com.bartoszkorec.warehouse_management.model.Distance;
+import com.bartoszkorec.warehouse_management.utils.DistanceHelper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -26,7 +27,7 @@ public class DistanceMatrixCalculator {
         for (int fromIdx = 0; fromIdx < size; fromIdx++) {
             for (int toIdx = 0; toIdx < size; toIdx++) {
                 if (fromIdx == toIdx) {
-                    distanceMatrix[fromIdx][toIdx] = new Distance(0, new int[0]);
+                    distanceMatrix[fromIdx][toIdx] = DistanceHelper.getNewDistance(0, null, null);
                 } else {
                     distanceMatrix[fromIdx][toIdx] = pathFinder.findShortestPath(
                             locationMap.get(fromIdx),
