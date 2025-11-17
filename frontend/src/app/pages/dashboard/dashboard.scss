@@ -31,6 +31,13 @@
 
     .btn {
       min-width: 150px;
+
+      &:disabled {
+        cursor: not-allowed;
+        background: #dee2e6;
+        border-color: #dee2e6;
+        color: #6c757d;
+      }
     }
   }
 
@@ -50,12 +57,170 @@
     border-radius: 0.75rem;
     padding: 1.5rem;
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
 
     h2 {
-      margin-top: 0;
-      margin-bottom: 1rem;
+      margin: 0;
       font-size: 1.25rem;
     }
+  }
+
+  &__results-header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.75rem;
+    align-items: baseline;
+  }
+
+  &__route-label {
+    margin: 0;
+    color: #6c757d;
+    font-weight: 500;
+  }
+
+  &__instruction {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    background: #f1f3f5;
+
+    .btn {
+      min-width: 190px;
+      background: #2b9348;
+      border: none;
+      color: #fff;
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+    }
+  }
+
+  &__instruction-label {
+    font-weight: 500;
+
+    strong {
+      color: #0d6efd;
+    }
+  }
+
+  &__grids {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.25rem;
+  }
+
+  &__grid-card {
+    border: 1px solid rgba(13, 110, 253, 0.15);
+    border-radius: 0.75rem;
+    padding: 1rem;
+    background: #fdfdff;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+
+    h3 {
+      margin: 0;
+      font-size: 1rem;
+    }
+  }
+
+  &__grid-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.5rem;
+  }
+
+  &__grid-meta {
+    font-size: 0.85rem;
+    color: #6c757d;
+  }
+
+  &__grid {
+    position: relative;
+    width: fit-content;
+    --cell-size: 32px;
+    --cell-gap: 4px;
+    --grid-padding: 6px;
+  }
+
+  &__cells {
+    display: grid;
+    grid-template-columns: repeat(var(--columns), var(--cell-size));
+    grid-template-rows: repeat(var(--rows), var(--cell-size));
+    gap: var(--cell-gap);
+    padding: var(--grid-padding);
+    background: #e9ecef;
+    border-radius: 0.75rem;
+  }
+
+  &__cell {
+    width: var(--cell-size);
+    height: var(--cell-size);
+    border-radius: 0.35rem;
+    background: #0d6efd;
+    opacity: 0.75;
+
+    &--track {
+      background: #ffffff;
+      opacity: 1;
+    }
+  }
+
+  &__dots {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  &__dot {
+    position: absolute;
+    width: 0.45rem;
+    height: 0.45rem;
+    border-radius: 999px;
+    background: #0d6efd;
+    transform: translate(-50%, -50%);
+    left: calc(
+      var(--grid-padding) + var(--dot-x) * (var(--cell-size) + var(--cell-gap)) + var(--cell-size) /
+        2
+    );
+    top: calc(
+      var(--grid-padding) + var(--dot-y) * (var(--cell-size) + var(--cell-gap)) + var(--cell-size) /
+        2
+    );
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.7);
+  }
+
+  &__dot--point {
+    width: 0.35rem;
+    height: 0.35rem;
+  }
+
+  &__dot--start {
+    background: #2b9348;
+    width: 0.75rem;
+    height: 0.75rem;
+  }
+
+  &__dot--end {
+    background: #c1121f;
+    width: 0.75rem;
+    height: 0.75rem;
+  }
+
+  &__dot--connector {
+    background: #6f2dbd;
+    width: 0.55rem;
+    height: 0.55rem;
   }
 
   &__locations {
@@ -72,10 +237,32 @@
     border-radius: 0.5rem;
     padding: 0.75rem 1rem;
     background-color: #f8f9fa;
+    gap: 0.5rem;
   }
 
   &__location-label {
     font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  &__badge {
+    padding: 0.1rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    background: rgba(13, 110, 253, 0.15);
+    color: #0d6efd;
+
+    &--dock {
+      background: rgba(43, 147, 72, 0.15);
+      color: #2b9348;
+    }
+
+    &--connector {
+      background: rgba(111, 45, 189, 0.15);
+      color: #6f2dbd;
+    }
   }
 
   &__location-point {
