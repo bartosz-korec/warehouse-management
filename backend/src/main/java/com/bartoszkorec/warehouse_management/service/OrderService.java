@@ -34,6 +34,9 @@ public class OrderService {
         Set<Integer> indices = new HashSet<>();
         while (indices.size() < subsetSize) {
             int candidate = 1 + random.nextInt(n);
+            if (candidate == locationService.getStartingLocationDto().id()) {
+                continue;
+            }
             indices.add(candidate);
         }
 
