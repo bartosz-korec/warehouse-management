@@ -1,42 +1,49 @@
 <div class="container min-vh-100 w-100 d-flex justify-content-center align-items-center">
   <div class="row w-100">
-    <form
-      [formGroup]="loginForm"
-      class="p-4 bg-white rounded shadow-lg login-card"
-      (ngSubmit)="login()"
-    >
-      <mat-form-field appearance="outline" class="w-100 mb-3">
-        <mat-label>Email</mat-label>
-        <input matInput placeholder="Email" formControlName="email" type="email" required />
-        @if(loginForm.get('email')?.errors?.['required'] && loginForm.get('email')?.touched) {
-        <mat-error> Email is required</mat-error>
-        } @if(loginForm.get('email')?.errors?.['email'] && loginForm.get('email')?.touched) {
-        <mat-error> Invalid email </mat-error>
-        }
-      </mat-form-field>
+    <div class="col-md-6 d-flex flex-column justify-content-center align-items-center text-center">
+      <h1 class="fw-bold mb-3">WMS</h1>
+      <p class="fs-5">Manage your inventory efficiently and effortlessly.</p>
+    </div>
+    <div class="col-md-4 offset-md-1">
+      <form
+        [formGroup]="loginForm"
+        class="p-4 bg-white rounded shadow-lg login-card"
+        (ngSubmit)="login()"
+      >
+        <mat-form-field appearance="outline" class="w-100 mb-3">
+          <mat-label>Email</mat-label>
+          <input matInput placeholder="Email" formControlName="email" type="email" required />
+          @if(loginForm.get('email')?.errors?.['required'] && loginForm.get('email')?.touched) {
+          <mat-error> Email is required</mat-error>
+          } @if(loginForm.get('email')?.errors?.['email'] && loginForm.get('email')?.touched) {
+          <mat-error> Invalid email </mat-error>
+          }
+        </mat-form-field>
 
-      <mat-form-field appearance="outline" class="w-100 mb-3">
-        <mat-label>Password</mat-label>
-        <input
-          matInput
-          placeholder="Password"
-          formControlName="password"
-          [type]="hidePassword ? 'password' : 'text'"
-          required
-        />
-        <mat-icon matSuffix (click)="hidePassword = !hidePassword">
-          {{ hidePassword ? 'visibility_off' : 'visibility' }}
-        </mat-icon>
-        @if(loginForm.get('password')?.errors?.['required'] && loginForm.get('password')?.touched) {
-        <mat-error> Password is required </mat-error>
-        }
-      </mat-form-field>
-      <div class="text-center errors">
-        @if(badCredential) {
-        <mat-error class="mt-n2 d-block"> Invalid email or password </mat-error>
-        }
-      </div>
-      <button matButton="filled" color="primary" class="w-100 mb-2" type="submit">Log In</button>
-    </form>
+        <mat-form-field appearance="outline" class="w-100 mb-3">
+          <mat-label>Password</mat-label>
+          <input
+            matInput
+            placeholder="Password"
+            formControlName="password"
+            [type]="hidePassword ? 'password' : 'text'"
+            required
+          />
+          <mat-icon matSuffix (click)="hidePassword = !hidePassword">
+            {{ hidePassword ? 'visibility_off' : 'visibility' }}
+          </mat-icon>
+          @if(loginForm.get('password')?.errors?.['required'] && loginForm.get('password')?.touched)
+          {
+          <mat-error> Password is required </mat-error>
+          }
+        </mat-form-field>
+        <div class="text-center errors">
+          @if(badCredential) {
+          <mat-error class="mt-n2 d-block"> Invalid email or password </mat-error>
+          }
+        </div>
+        <button matButton="filled" color="primary" class="w-100 mb-2" type="submit">Log In</button>
+      </form>
+    </div>
   </div>
 </div>
