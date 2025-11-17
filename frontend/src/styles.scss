@@ -1,4 +1,93 @@
 /* You can add global styles to this file, and also import other style files */
 
 /* Importing Bootstrap SCSS file. */
+@use '@angular/material' as mat;
 @import 'bootstrap/scss/bootstrap';
+
+// Customize the entire app. Change :root to your selector if you want to scope the styles.
+
+.green-button {
+  @include mat.button-overrides(
+    (
+      filled-container-color: #02a78e,
+    )
+  );
+}
+
+.red-button {
+  @include mat.button-overrides(
+    (
+      filled-container-color: #f44336,
+    )
+  );
+}
+
+.gray-button {
+  @include mat.button-overrides(
+    (
+      filled-container-color: #888888,
+    )
+  );
+}
+
+.dark-blue-button {
+  @include mat.button-overrides(
+    (
+      filled-container-color: #152a94,
+    )
+  );
+}
+
+.mat-tab-nav-bar {
+  background-color: #0e2386;
+
+  .mat-tab-link {
+    color: rgba(255, 255, 255, 0.7);
+    border-bottom: 2px solid transparent;
+    transition: color 0.3s, border-color 0.3s;
+
+    &.mat-tab-label-active {
+      color: white;
+      border-bottom-color: white;
+      font-weight: 600;
+    }
+
+    &:hover {
+      color: blue;
+      border-bottom-color: blue;
+    }
+  }
+}
+
+.compact-form-field {
+  @include mat.form-field-density(-4);
+}
+
+.error-message {
+  color: red;
+}
+
+html {
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$azure-palette,
+        tertiary: mat.$blue-palette,
+      ),
+      typography: Roboto,
+      density: 0,
+    )
+  );
+
+  // Default the application to a light color theme. This can be changed to
+  // `dark` to enable the dark color theme, or to `light dark` to defer to the
+  // user's system settings.
+  color-scheme: light;
+
+  // Set a default background, font and text colors for the application using
+  // Angular Material's system-level CSS variables. Learn more about these
+  // variables at https://material.angular.dev/guide/system-variables
+  background-color: var(--mat-sys-surface);
+  color: var(--mat-sys-on-S);
+  font: var(--mat-sys-body-medium);
+}
