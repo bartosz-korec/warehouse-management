@@ -1,0 +1,118 @@
+h1 {
+  font-size: 60px;
+  letter-spacing: 4px;
+  color: #005cbb;
+}
+
+p {
+  font-weight: 600;
+  letter-spacing: 2px;
+}
+
+.login-card {
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+.letter-button {
+  all: unset;
+  font-weight: 600;
+  letter-spacing: 2px;
+  font-size: inherit;
+  color: inherit;
+  cursor: text;
+
+  &:hover {
+    text-decoration: none;
+  }
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 12px;
+  box-sizing: border-box;
+  z-index: 2000;
+}
+
+.centered-form {
+  background: #ffffff;
+  width: 92%;
+  max-width: 520px;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.16);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-sizing: border-box;
+  max-height: 90vh;
+  overflow-y: auto;
+  outline: none;
+
+  p {
+    font-size: 20px;
+    font-weight: 700;
+    color: #02a78e;
+    margin: 0 0 6px;
+    text-align: center;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+}
+
+.form-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.button-group {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.button {
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  min-width: 110px;
+  padding: 8px 14px;
+  cursor: pointer;
+  border: none;
+  border-radius: 6px;
+}
+
+.errors {
+  height: auto;
+  margin: 0;
+  font-size: 13px;
+  color: #d32f2f;
+}
+
+@media (max-width: 420px) {
+  .centered-form {
+    padding: 14px;
+
+    p {
+      font-size: 18px;
+    }
+  }
+
+  .button-group {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .button {
+    width: 100%;
+    min-width: 0;
+  }
+}
