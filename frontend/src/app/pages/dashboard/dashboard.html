@@ -7,7 +7,12 @@
 
   <div class="dashboard__actions">
     <button type="button" class="btn btn-outline-secondary" (click)="logout()">Logout</button>
-    <button type="button" class="btn btn-primary" (click)="collectOrder()" [disabled]="isLoading">
+    <button
+      type="button"
+      class="btn btn-primary"
+      (click)="collectOrder()"
+      [disabled]="isLoading || !!orderResponse"
+    >
       {{ isLoading ? 'Collecting...' : 'Collect order' }}
     </button>
   </div>
@@ -18,16 +23,90 @@
   <p class="dashboard__error">{{ errorMessage }}</p>
   } @if (orderResponse) {
   <section class="dashboard__results">
-    <h2>Route preview</h2>
+    <div class="dashboard__results-header">
+      <h2>Route preview</h2>
+      @if (hasRoute) {
+      <p class="dashboard__route-label">
+        {{ startLocation?.label }} ➜ {{ destinationLocation?.label }}
+      </p>
+      }
+    </div>
+
+    @if (destinationLocation) {
+    <div class="dashboard__instruction">
+      <span class="dashboard__instruction-label">
+        Go to location: <strong>{{ destinationLocation.label }}</strong>
+      </span>
+      <button
+        type="button"
+        class="btn btn-success"
+        (click)="confirmItemCollection()"
+        [disabled]="!canConfirmSegment"
+      >
+        Confirm item collection
+      </button>
+    </div>
+    }
+
+    <div class="dashboard__grids">
+      @if (currentGrid; as grid) {
+      <article class="dashboard__grid-card">
+        <header class="dashboard__grid-card-header">
+          <h3>Grid {{ grid.id }}</h3>
+          <span class="dashboard__grid-meta">
+            {{ grid.layout[0]?.length ?? 0 }} × {{ grid.layout.length }}
+          </span>
+        </header>
+
+        <div
+          class="dashboard__grid"
+          [style.--columns]="grid.layout[0]?.length ?? 0"
+          [style.--rows]="grid.layout.length ?? 0"
+        >
+          <div class="dashboard__cells">
+            @for (row of grid.layout; track $index) { @for (value of row; track $index) {
+            <div class="dashboard__cell" [class.dashboard__cell--track]="isTrack(value)"></div>
+            } }
+          </div>
+
+          <div class="dashboard__dots">
+            @for (location of activeSegmentLocationsByGrid(grid.id); track location.label + '-' +
+            location.point.x + '-' + location.point.y + '-' + $index) {
+            <span
+              class="dashboard__dot"
+              [ngClass]="getDotClass(location)"
+              [style.--dot-x]="location.point.y"
+              [style.--dot-y]="location.point.x"
+              [attr.aria-label]="location.label"
+              title="{{ location.label }}"
+            >
+            </span>
+            }
+          </div>
+        </div>
+      </article>
+      } @else {
+      <p class="dashboard__hint">Active grid is unavailable.</p>
+      }
+    </div>
+
     <div class="dashboard__locations">
-      @for (location of orderResponse.locations; track location.label) {
+      @for (location of orderResponse.locations; track location.label + '-' + $index) {
       <article class="dashboard__location">
-        <span class="dashboard__location-label">{{ location.label }}</span>
-        @if (location.point) {
+        <span class="dashboard__location-label">
+          {{ location.label }}
+          <span
+            class="dashboard__badge"
+            [class.dashboard__badge--dock]="isLoadingDock(location.label)"
+            [class.dashboard__badge--connector]="isConnector(location.label)"
+          >
+            @if (isLoadingDock(location.label)) { Dock } @else if (isConnector(location.label)) {
+            Connector } @else { Point }
+          </span>
+        </span>
         <span class="dashboard__location-point">
           Grid {{ location.point.gridIndex }} · x{{ location.point.x }} · y{{ location.point.y }}
         </span>
-        }
       </article>
       }
     </div>
