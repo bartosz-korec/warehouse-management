@@ -1,0 +1,36 @@
+<section class="dashboard">
+  <header class="dashboard__header">
+    <img src="/PK_SYGNET_RGB.png" alt="PK logo" class="dashboard__logo" />
+    <h1>Warehouse Management System</h1>
+    <img src="/WM_SYGNET_RGB.png" alt="WM logo" class="dashboard__logo" />
+  </header>
+
+  <div class="dashboard__actions">
+    <button type="button" class="btn btn-outline-secondary" (click)="logout()">Logout</button>
+    <button type="button" class="btn btn-primary" (click)="collectOrder()" [disabled]="isLoading">
+      {{ isLoading ? 'Collecting...' : 'Collect order' }}
+    </button>
+  </div>
+
+  @if (!orderResponse && !isLoading) {
+  <p class="dashboard__hint">Press "Collect order" to compute a picking route.</p>
+  } @if (errorMessage) {
+  <p class="dashboard__error">{{ errorMessage }}</p>
+  } @if (orderResponse) {
+  <section class="dashboard__results">
+    <h2>Route preview</h2>
+    <div class="dashboard__locations">
+      @for (location of orderResponse.locations; track location.label) {
+      <article class="dashboard__location">
+        <span class="dashboard__location-label">{{ location.label }}</span>
+        @if (location.point) {
+        <span class="dashboard__location-point">
+          Grid {{ location.point.gridIndex }} · x{{ location.point.x }} · y{{ location.point.y }}
+        </span>
+        }
+      </article>
+      }
+    </div>
+  </section>
+  }
+</section>

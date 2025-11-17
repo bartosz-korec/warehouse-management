@@ -1,0 +1,85 @@
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 2rem;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    text-align: center;
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.5rem, 2.5vw, 2.25rem);
+      font-weight: 600;
+    }
+  }
+
+  &__logo {
+    width: 64px;
+    height: 64px;
+    object-fit: contain;
+  }
+
+  &__actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+
+    .btn {
+      min-width: 150px;
+    }
+  }
+
+  &__hint {
+    text-align: center;
+    color: #6c757d;
+  }
+
+  &__error {
+    text-align: center;
+    color: #c1121f;
+    font-weight: 500;
+  }
+
+  &__results {
+    background: #ffffff;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+
+    h2 {
+      margin-top: 0;
+      margin-bottom: 1rem;
+      font-size: 1.25rem;
+    }
+  }
+
+  &__locations {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  &__location {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+    background-color: #f8f9fa;
+  }
+
+  &__location-label {
+    font-weight: 600;
+  }
+
+  &__location-point {
+    color: #0d6efd;
+    font-size: 0.95rem;
+  }
+}

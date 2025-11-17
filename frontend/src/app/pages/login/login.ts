@@ -45,7 +45,7 @@ export class Login {
 
           localStorage.setItem('token', token);
 
-          this.router.navigateByUrl('/');
+          this.router.navigateByUrl('dashboard');
         },
         error: () => {
           this.badCredential = true;

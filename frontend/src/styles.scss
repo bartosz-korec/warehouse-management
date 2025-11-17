@@ -2,33 +2,10 @@
 
 /* Importing Bootstrap SCSS file. */
 @use '@angular/material' as mat;
+
 @import 'bootstrap/scss/bootstrap';
 
 // Customize the entire app. Change :root to your selector if you want to scope the styles.
-
-.green-button {
-  @include mat.button-overrides(
-    (
-      filled-container-color: #02a78e,
-    )
-  );
-}
-
-.red-button {
-  @include mat.button-overrides(
-    (
-      filled-container-color: #f44336,
-    )
-  );
-}
-
-.gray-button {
-  @include mat.button-overrides(
-    (
-      filled-container-color: #888888,
-    )
-  );
-}
 
 .dark-blue-button {
   @include mat.button-overrides(

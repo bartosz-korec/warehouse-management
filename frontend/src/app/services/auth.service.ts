@@ -2,11 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
-
-interface LoginResponse {
-  token: string;
-  expiresIn: number;
-}
+import { LoginResponse } from '../models/login-response';
 
 @Injectable({
   providedIn: 'root',
@@ -25,10 +21,5 @@ export class AuthService {
 
   logout() {
     localStorage.removeItem('token');
-    return this.http.post<null>(
-      'http://localhost:8080/api/v1/auth/logout',
-      {},
-      { withCredentials: true }
-    );
   }
 }
