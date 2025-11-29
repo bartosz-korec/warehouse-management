@@ -1,5 +1,8 @@
 package com.bartoszkorec.warehouse_management.model;
 
+import lombok.Getter;
+
+@Getter
 public enum LocationType {
 
     WALL(0),
@@ -13,8 +16,5 @@ public enum LocationType {
 
     LocationType(int label) {
         this.label = label;
-    }
-    public int getLabel() {
-        return label;
     }
 }
