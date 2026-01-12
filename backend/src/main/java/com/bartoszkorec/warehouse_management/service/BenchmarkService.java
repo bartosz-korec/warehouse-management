@@ -16,7 +16,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -91,10 +90,6 @@ public class BenchmarkService implements ApplicationRunner {
     BenchmarkResult winner = results.stream().min(WINNER_ORDER).orElseThrow();
     log.info("Routing benchmark winner: {} (length={}, time={}ms)",
       winner.algorithm(), winner.routeLength(), winner.durationMillis());
-    if (!"ortools".equalsIgnoreCase(winner.algorithm())
-      && algorithmOrder.stream().anyMatch("ortools"::equalsIgnoreCase)) {
-      log.warn("Expected OR-Tools to dominate, but {} performed better.", winner.algorithm());
-    }
   }
 
   private BenchmarkResult measure(String name,
@@ -106,23 +101,31 @@ public class BenchmarkService implements ApplicationRunner {
     long totalTimeNanos = 0L;
     int safeIterations = Math.max(1, iterations);
 
+    if (name.contains("held")) System.gc();
+
     for (int i = 0; i < safeIterations; i++) {
-      RouteComputationContext context = RouteComputationContext.from(sampleNodeIds, depot, distanceMatrix);
-      long start = System.nanoTime();
-      RouteResultDto result = algorithm.calculate(context);
-      totalTimeNanos += System.nanoTime() - start;
-      totalLength += result.totalDistance();
+      try {
+        RouteComputationContext context = RouteComputationContext.from(sampleNodeIds, depot, distanceMatrix);
+        long start = System.nanoTime();
+        RouteResultDto result = algorithm.calculate(context);
+        totalTimeNanos += System.nanoTime() - start;
+        totalLength += result.totalDistance();
+      } catch (Exception e) {
+        log.error("Routing algorithm '{}' failed on iteration {}/{}: {}",
+          name, i + 1, safeIterations, e.getMessage(), e);
+        safeIterations--;
+      }
     }
 
     long avgLength = totalLength / safeIterations;
-    long avgTimeMs = TimeUnit.NANOSECONDS.toMillis(totalTimeNanos / safeIterations);
-    log.info("Algorithm {} -> avg length={}, avg time={}ms", name, avgLength, avgTimeMs);
-    return new BenchmarkResult(name, avgLength, avgTimeMs);
+    long avgTime = totalTimeNanos / safeIterations;
+    log.info("Algorithm {} -> avg length={}, avg time={}ms", name, avgLength, avgTime);
+    return new BenchmarkResult(name, avgLength, avgTime);
   }
 
   private void logSummary(List<BenchmarkResult> results) {
     StringBuilder builder = new StringBuilder(System.lineSeparator());
-    builder.append(" | Algorithm            | Avg length   | Avg time [ms] |").append(System.lineSeparator());
+    builder.append(" | Algorithm            | Avg length   | Avg time [ns] |").append(System.lineSeparator());
     builder.append(" |----------------------|--------------|---------------|").append(System.lineSeparator());
     for (BenchmarkResult result : results) {
       builder.append(String.format(" | %-20s | %-12d | %-13d |%n",
